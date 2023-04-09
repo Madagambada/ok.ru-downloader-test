@@ -166,7 +166,9 @@ void httpServer() {
                 mtx.lock();
                 if (std::find(uidList.begin(), uidList.end(), msg) == uidList.end()) {
                     mtx.unlock();
-                    std::string vurl = curl_get(msg);
+                    //std::string vurl = curl_get(msg);
+                    curl_get(msg);
+                    std::string vurl = "";
                     if (vurl == "404") {
                         res.body = (head + "\"" + msg + "\"" + " not found\n");
                     }
@@ -309,7 +311,9 @@ void dworker() {
 
 void worker(std::vector<std::string> tuidList) {
     for (int i = 0; i < tuidList.size(); i++) {
-        std::string vurl = curl_get(tuidList[i]);
+        //std::string vurl = curl_get(tuidList[i]);
+        curl_get(tuidList[i]);
+        std::string vurl = "";
         if (vurl.empty() || vurl == "404" || vContains(downloadListvid, vurl)) {
             if (vurl == "404") {
                 mtx.lock();
