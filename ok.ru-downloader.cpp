@@ -388,6 +388,7 @@ int main(int argc, char* argv[]) {
     int workers = 4;
 
     while (!stop) {
+        curl_global_init(CURL_GLOBAL_DEFAULT);
         mtx.lock();
         std::vector<std::string> _uidList = uidList;
         mtx.unlock();
@@ -416,10 +417,10 @@ int main(int argc, char* argv[]) {
         two.join();
         three.join();
         four.join();
-        
+
         workerUidList.clear();
+        curl_global_cleanup();
     }
 
-    curl_global_cleanup();
     return 0;
 }
