@@ -52,7 +52,7 @@ curl -s -L $wolfSSLArchive | tar xz
 echo -n "Configure wolfSSL... "
 cd wolfssl*
 ./autogen.sh 
-./configure --enable-curl --enable-static --disable-shared --enable-all-crypto --with-libz=$TOOLCHAIN 
+./configure --enable-curl --enable-static --disable-shared --enable-all-crypto --with-libz 
 
 echo -n "Build wolfSSL... "
 make
@@ -84,7 +84,7 @@ curl -s -L $curlArchive | tar --xz -x
 
 echo -n "Configure curl... "
 cd curl*
-./configure --disable-shared --with-wolfssl=$TOOLCHAIN --enable-ares=$TOOLCHAIN --with-nghttp2=$TOOLCHAIN 
+./configure --disable-shared --with-wolfssl --enable-aresN --with-nghttp2
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
