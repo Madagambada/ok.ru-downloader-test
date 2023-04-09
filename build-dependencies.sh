@@ -11,7 +11,7 @@ echo -n "Install tools... "
 sudo apt update && sudo apt install tar xz-utils curl cmake make autoconf libtool -y
 
 echo -n "Set toolchain vars... "
-export TOOLCHAIN=/usr/local
+export TOOLCHAIN=/usr/local/staticlibs
 
 #zlib
 echo -n "Download and Extract zlib... "
@@ -19,7 +19,7 @@ curl -s -L $zlibArchive | tar --xz -x
 
 echo -n "Configure zlib... "
 cd zlib*
-./configure --static
+./configure --prefix=$TOOLCHAIN --static
 
 echo -n "Build zlib... "
 make -j$(nproc)
@@ -35,7 +35,7 @@ curl -s -L $caresArchive | tar zx
 
 echo -n "Configure c-ares... "
 cd c-ares*
-./configure --disable-shared 
+./configure --prefix=$TOOLCHAIN --disable-shared 
 
 echo -n "Build c-ares... "
 make -j"$(nproc)" 
@@ -52,7 +52,7 @@ curl -s -L $wolfSSLArchive | tar xz
 echo -n "Configure wolfSSL... "
 cd wolfssl*
 ./autogen.sh 
-./configure --enable-curl --enable-static --disable-shared --enable-all-crypto --with-libz 
+./configure --enable-curl --prefix=$TOOLCHAIN --enable-static --disable-shared --enable-all-crypto --with-libz=$TOOLCHAIN 
 
 echo -n "Build wolfSSL... "
 make
@@ -68,7 +68,7 @@ curl -s -L $nghttp2Archive | tar --xz -x
 
 echo -n "Configure nghttp2... "
 cd nghttp2*
-./configure --enable-lib-only --disable-shared
+./configure --enable-lib-only --disable-shared --prefix=$TOOLCHAIN
 
 echo -n "Build nghttp2... "
 make -j"$(nproc)" 
@@ -84,7 +84,7 @@ curl -s -L $curlArchive | tar --xz -x
 
 echo -n "Configure curl... "
 cd curl*
-./configure --disable-shared --with-wolfssl --enable-aresN --with-nghttp2
+./configure --disable-shared --prefix=$TOOLCHAIN --with-wolfssl=$TOOLCHAIN --enable-ares=$TOOLCHAIN --with-nghttp2=$TOOLCHAIN 
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
