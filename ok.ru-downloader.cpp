@@ -407,18 +407,16 @@ int main(int argc, char* argv[]) {
         }
         workerUidList.push_back(_uidList);
 
-        std::vector<std::future<void>> workerJobs;
+        std::thread one(worker, workerUidList[0]);
+        std::thread two(worker, workerUidList[1]);
+        std::thread three(worker, workerUidList[2]);
+        std::thread four(worker, workerUidList[3]);
 
-        for (int i = 0; i < workers; i++) {
-            workerJobs.push_back(std::async(worker, workerUidList[i]));
-        }
-
-        for (int i = 0; i < workerJobs.size(); i++) {
-            workerJobs[i].wait();
-            workerJobs[i].get();
-        }
-
-        workerJobs.clear();
+        one.join();
+        two.join();
+        three.join();
+        four.join();
+        
         workerUidList.clear();
     }
 
