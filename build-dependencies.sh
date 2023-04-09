@@ -15,7 +15,7 @@ mkdir dependencies
 cd dependencies
 git clone git://git.musl-libc.org/musl
 cd musl
-./configure --prefix=$(pwd)/../musl-toolchain --target=x86_64-linux-musl
+./configure --prefix=$(pwd)/../musl-toolchain
 make
 make install
 
