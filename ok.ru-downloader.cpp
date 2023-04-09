@@ -314,7 +314,7 @@ void dworker() {
 
         if (!_toDownload.empty()) {
             for (int i = 0; i < _toDownload.size(); i++) {
-                std::thread(downloader, _toDownload[i].first, _toDownload[i].second).detach();
+                //std::thread(downloader, _toDownload[i].first, _toDownload[i].second).detach();
             }
             _toDownload.clear();
         }
@@ -332,8 +332,7 @@ void dworker() {
 
 void worker(std::vector<std::string> tuidList) {
     for (int i = 0; i < tuidList.size(); i++) {
-        //std::string vurl = curl_get(tuidList[i]);
-        std::string vurl = "";
+        std::string vurl = curl_get(tuidList[i]);
         if (vurl.empty() || vurl == "404" || vContains(downloadListvid, vurl)) {
             if (vurl == "404") {
                 mtx.lock();
