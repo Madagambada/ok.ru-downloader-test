@@ -13,12 +13,14 @@ sudo apt update && sudo apt install git tar xz-utils curl cmake make autoconf li
 echo -n "Get latest musl toolchain... "
 mkdir dependencies
 cd dependencies
-git clone git://git.musl-libc.org/musl
-cd musl
-./configure --prefix=$(pwd)/musl-toolchain
-make
+git clone https://github.com/richfelker/musl-cross-make.git
+cd musl-cross-make
+cp ../../config.mak config.mak
+make -j$(nproc)
 make install
 
+cd ../..
+ls
 
 echo -n "Set toolchain vars... "
 export TOOLCHAIN=$(pwd)/musl-toolchain
