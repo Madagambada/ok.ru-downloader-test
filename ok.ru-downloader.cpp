@@ -44,6 +44,7 @@ void curl_get(std::string uid) {
     curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
     /* example.com is redirected, so we tell libcurl to follow redirection */
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
  
     /* Perform the request, res will get the return code */
     res = curl_easy_perform(curl);
