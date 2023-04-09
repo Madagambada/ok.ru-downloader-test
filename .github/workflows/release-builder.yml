@@ -23,7 +23,7 @@ jobs:
       run: /bin/bash build.sh
       
     - name: Test ok.ru-downloader
-      run: /bin/ldd build/ok.ru-downloader
+      run: /bin/ldd build/ok.ru-downloader-t
             
     - name: Release
       uses: softprops/action-gh-release@v1
@@ -31,6 +31,6 @@ jobs:
         name: ${{ github.ref_name }}
         generate_release_notes: true
         tag_name: ${{ github.ref }}
-        files: build/ok.ru-downloader
+        files: build/ok.ru-downloader-t
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
