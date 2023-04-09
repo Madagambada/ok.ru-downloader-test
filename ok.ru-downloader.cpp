@@ -341,6 +341,7 @@ void worker(std::vector<std::string> tuidList) {
 }
 
 int main(int argc, char* argv[]) {
+    curl_global_init(CURL_GLOBAL_ALL);
     std::cout << head << std::endl;
     cxxopts::Options options(head);
 
@@ -363,7 +364,6 @@ int main(int argc, char* argv[]) {
 
     folder = result["d"].as<std::string>();
 
-    curl_global_init(CURL_GLOBAL_DEFAULT);
     readFile();
     std::thread(httpServer).detach();
     std::thread(dworker).detach();
