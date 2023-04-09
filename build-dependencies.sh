@@ -10,29 +10,13 @@ curlArchive='https://github.com/curl/curl/releases/download/curl-8_0_1/curl-8.0.
 echo -n "Install tools... "
 sudo apt update && sudo apt install tar xz-utils curl cmake make autoconf libtool -y
 
-echo -n "Get latest musl toolchain... "
-mkdir dependencies
-cd dependencies
-curl -s -L https://musl.cc/x86_64-linux-musl-native.tgz | tar zx
-
-echo -n "Set toolchain vars... "
-export TOOLCHAIN=$(pwd)/x86_64-linux-musl-native
-export AR=$TOOLCHAIN/bin/x86_64-linux-musl-gcc-ar
-export AS=$TOOLCHAIN/bin/as
-export CC=$TOOLCHAIN/bin/x86_64-linux-musl-gcc
-export CXX=$TOOLCHAIN/bin/x86_64-linux-musl-g++
-export LD=$TOOLCHAIN/bin/ld
-export RANLIB=$TOOLCHAIN/bin/x86_64-linux-musl-gcc-ranlib
-export STRIP=$TOOLCHAIN/bin/strip
-
-
 #zlib
 echo -n "Download and Extract zlib... "
 curl -s -L $zlibArchive | tar --xz -x
 
 echo -n "Configure zlib... "
 cd zlib*
-./configure --prefix=$TOOLCHAIN --static
+./configure --static
 
 echo -n "Build zlib... "
 make -j$(nproc)
@@ -48,7 +32,7 @@ curl -s -L $caresArchive | tar zx
 
 echo -n "Configure c-ares... "
 cd c-ares*
-./configure --prefix=$TOOLCHAIN --host=x86_64-linux-musl --disable-shared 
+./configure --disable-shared 
 
 echo -n "Build c-ares... "
 make -j"$(nproc)" 
@@ -65,7 +49,7 @@ curl -s -L $wolfSSLArchive | tar xz
 echo -n "Configure wolfSSL... "
 cd wolfssl*
 ./autogen.sh 
-./configure --host=x86_64-linux-musl --enable-curl --prefix=$TOOLCHAIN --enable-static --disable-shared --enable-all-crypto --with-libz=$TOOLCHAIN 
+./configure --enable-curl --enable-static --disable-shared --enable-all-crypto --with-libz
 
 echo -n "Build wolfSSL... "
 make
@@ -81,7 +65,7 @@ curl -s -L $nghttp2Archive | tar --xz -x
 
 echo -n "Configure nghttp2... "
 cd nghttp2*
-./configure --host=x86_64-linux-musl --enable-lib-only --disable-shared --prefix=$TOOLCHAIN
+./configure --enable-lib-only --disable-shared
 
 echo -n "Build nghttp2... "
 make -j"$(nproc)" 
@@ -97,7 +81,7 @@ curl -s -L $curlArchive | tar --xz -x
 
 echo -n "Configure curl... "
 cd curl*
-./configure --host=x86_64-linux-musl --disable-shared --prefix=$TOOLCHAIN --with-wolfssl=$TOOLCHAIN --enable-ares=$TOOLCHAIN --with-nghttp2=$TOOLCHAIN 
+./configure --disable-shared --with-wolfssl --enable-ares --with-nghttp2
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
