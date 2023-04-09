@@ -332,7 +332,8 @@ void dworker() {
 
 void worker(std::vector<std::string> tuidList) {
     for (int i = 0; i < tuidList.size(); i++) {
-        std::string vurl = curl_get(tuidList[i]);
+        //std::string vurl = curl_get(tuidList[i]);
+        std::string vurl = ""
         if (vurl.empty() || vurl == "404" || vContains(downloadListvid, vurl)) {
             if (vurl == "404") {
                 mtx.lock();
