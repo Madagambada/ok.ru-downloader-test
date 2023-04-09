@@ -50,9 +50,8 @@ std::string curl_get(std::string uid) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_func);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
 
-        curl_easy_cleanup(curl);
-
         res = curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
         if (res != CURLE_OK) {
             std::stringstream sstime;
             std::time_t etimr = std::time(nullptr);
