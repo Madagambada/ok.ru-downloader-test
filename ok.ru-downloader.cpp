@@ -34,22 +34,48 @@ static size_t curl_write_func(void* buffer, size_t size, size_t nmemb, void* par
     return totalsize;
 }
 
-std::string curl_get_test(std::string uid) {
+std::string curl_get(std::string uid) {
     CURL* curl;
     CURLcode res;
-    std::string url = "https://example.com";
+    std::string data;
+    std::string url = "https://ok.ru/profile/" + uid + "/video";
     curl = curl_easy_init();
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 20L);
         curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
-
-        res = curl_easy_perform(curl);
+        curl_easy_setopt(curl, CURLOPT_DNS_SERVERS, "1.1.1.1,1.0.0.1");
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36");
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_func);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
 
         curl_easy_cleanup(curl);
+
+        res = curl_easy_perform(curl);
+        if (res != CURLE_OK) {
+            std::stringstream sstime;
+            std::time_t etimr = std::time(nullptr);
+            sstime << std::put_time(std::localtime(&etimr), "[%H:%M:%S, %d-%m-%Y] curl_get error ") << res << ": " << curl_easy_strerror(res) << ", at: " << url;
+            std::cout << sstime.str();
+            errorList.push_back(sstime.str());
+            return std::string();
+        }
+        if (strutil::contains(data, "video-card_live __active")) {
+            data = strutil::split(data, "video-card_live __active")[0];
+            data = strutil::split(data, "video-card_img-w")[1];
+            data = strutil::split(data, "href=\"")[1];
+            data = strutil::split(data, "\"")[0];
+            return data;
+        }
+        if (strutil::contains(data, "page-not-found")) {
+            return "404";
+        }
+        
+        return std::string();
     }
-    return "";
+    curl_easy_cleanup(curl);
+    return std::string();
 }
 
 bool vContains(std::vector<std::string> v, std::string s) {
@@ -161,7 +187,7 @@ void httpServer() {
                 mtx.lock();
                 if (std::find(uidList.begin(), uidList.end(), msg) == uidList.end()) {
                     mtx.unlock();
-                    std::string vurl = curl_get_test(msg);
+                    std::string vurl = curl_get(msg);
                     if (vurl == "404") {
                         res.body = (head + "\"" + msg + "\"" + " not found\n");
                     }
@@ -303,9 +329,8 @@ void dworker() {
 }
 
 void worker(std::vector<std::string> tuidList) {
-    std::string vurl;
     for (int i = 0; i < tuidList.size(); i++) {
-        vurl = curl_get_test(tuidList[i]);
+        std::string vurl = curl_get(tuidList[i]);
         if (vurl.empty() || vurl == "404" || vContains(downloadListvid, vurl)) {
             if (vurl == "404") {
                 mtx.lock();
@@ -326,14 +351,12 @@ void worker(std::vector<std::string> tuidList) {
         downloadListuid.push_back(tuidList[i]);
         toDownload.push_back(std::make_pair(vurl, tuidList[i]));
         mtx.unlock();
-        vurl.clear();
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
 
 int main(int argc, char* argv[]) {
     std::cout << head << std::endl;
-    curl_global_init(CURL_GLOBAL_ALL);
     cxxopts::Options options(head);
 
     options.add_options()
@@ -355,12 +378,12 @@ int main(int argc, char* argv[]) {
 
     folder = result["d"].as<std::string>();
 
+    curl_global_init(CURL_GLOBAL_DEFAULT);
     readFile();
     std::thread(httpServer).detach();
     std::thread(dworker).detach();
 
     int workers = 4;
-    std::vector<std::future<void>> workerJobs;
 
     while (!stop) {
         mtx.lock();
@@ -382,13 +405,14 @@ int main(int argc, char* argv[]) {
         }
         workerUidList.push_back(_uidList);
 
+        std::vector<std::future<void>> workerJobs;
 
         for (int i = 0; i < workers; i++) {
-            workerJobs.push_back(std::async(std::launch::async, worker, workerUidList[i]));
+            workerJobs.push_back(std::async(worker, workerUidList[i]));
         }
 
         for (int i = 0; i < workerJobs.size(); i++) {
-            (void)workerJobs[i].wait();
+            workerJobs[i].wait();
         }
 
         workerJobs.clear();
