@@ -414,7 +414,7 @@ int main(int argc, char* argv[]) {
         }
 
         for (int i = 0; i < workerJobs.size(); i++) {
-            workerJobs[i].wait();
+            workerJobs[i].get();
         }
 
         workerJobs.clear();
