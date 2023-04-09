@@ -5,7 +5,7 @@ include_directories($TOOLCHAIN/include)
 link_directories($TOOLCHAIN/lib)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Wsign-compare")
 
 set(LINKING_LIBRARIES "-lcurl -lwolfssl -lz -lcares -lnghttp2")
 
