@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.13)
+project (ok.ru-downloader)
+
+include_directories($TOOLCHAIN/include)
+link_directories($TOOLCHAIN/lib)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra")
+
+set(LINKING_LIBRARIES "-lcurl -lwolfssl -lz -lcares -lnghttp2")
+
+add_executable (ok.ru-downloader ok.ru-downloader.cpp)
+target_link_libraries (ok.ru-downloader ${LINKING_LIBRARIES} -static)
