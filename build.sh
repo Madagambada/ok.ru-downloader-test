@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo -n "Set toolchain vars... "
-export TOOLCHAIN=$(pwd)/../musl-toolchain
+export TOOLCHAIN=$(pwd)/musl-toolchain
 export CC=$TOOLCHAIN/bin/musl-gcc
 
 ls $TOOLCHAIN/bin/musl-gcc
