@@ -331,8 +331,9 @@ void dworker() {
 }
 
 void worker(std::vector<std::string> tuidList) {
+    std::string vurl;
     for (int i = 0; i < tuidList.size(); i++) {
-        std::string vurl = curl_get(tuidList[i]);
+        vurl = curl_get(tuidList[i]);
         if (vurl.empty() || vurl == "404" || vContains(downloadListvid, vurl)) {
             if (vurl == "404") {
                 mtx.lock();
@@ -353,6 +354,7 @@ void worker(std::vector<std::string> tuidList) {
         downloadListuid.push_back(tuidList[i]);
         toDownload.push_back(std::make_pair(vurl, tuidList[i]));
         mtx.unlock();
+        vurl.clear();
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
@@ -383,7 +385,7 @@ int main(int argc, char* argv[]) {
 
     readFile();
     std::thread(httpServer).detach();
-    //std::thread(dworker).detach();
+    std::thread(dworker).detach();
 
     int workers = 4;
 
