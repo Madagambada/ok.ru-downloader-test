@@ -34,52 +34,6 @@ static size_t curl_write_func(void* buffer, size_t size, size_t nmemb, void* par
     return totalsize;
 }
 
-std::string curl_get(std::string uid) {
-    CURL* curl;
-    CURLcode res;
-    std::string data;
-    std::string url = "https://ok.ru/profile/" + uid + "/video";
-    curl = curl_easy_init();
-    if (curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 20L);
-        curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
-        curl_easy_setopt(curl, CURLOPT_DNS_SERVERS, "1.1.1.1,1.0.0.1");
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36");
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_func);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
-
-        res = curl_easy_perform(curl);
-        if (res != CURLE_OK) {
-            std::stringstream sstime;
-            std::time_t etimr = std::time(nullptr);
-            sstime << std::put_time(std::localtime(&etimr), "[%H:%M:%S, %d-%m-%Y] curl_get error ") << res << ": " << curl_easy_strerror(res) << ", at: " << url;
-            std::cout << sstime.str();
-            errorList.push_back(sstime.str());
-            curl_easy_cleanup(curl);
-            return std::string();
-        }
-        if (strutil::contains(data, "video-card_live __active")) {
-            data = strutil::split(data, "video-card_live __active")[0];
-            data = strutil::split(data, "video-card_img-w")[1];
-            data = strutil::split(data, "href=\"")[1];
-            data = strutil::split(data, "\"")[0];
-            curl_easy_cleanup(curl);
-            return data;
-        }
-        if (strutil::contains(data, "page-not-found")) {
-            curl_easy_cleanup(curl);
-            return "404";
-        }
-
-        curl_easy_cleanup(curl);
-        return std::string();
-    }
-    curl_easy_cleanup(curl);
-    return std::string();
-}
-
 std::string curl_get_test(std::string uid) {
     CURL* curl;
     CURLcode res;
@@ -94,9 +48,7 @@ std::string curl_get_test(std::string uid) {
         res = curl_easy_perform(curl);
 
         curl_easy_cleanup(curl);
-        return "";
     }
-    curl_easy_cleanup(curl);
     return "";
 }
 
