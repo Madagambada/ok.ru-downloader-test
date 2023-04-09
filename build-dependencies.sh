@@ -22,7 +22,7 @@ echo -n "Build zlib... "
 make -j$(nproc)
 
 echo -n "Install zlib... "
-make install 
+sudo make install 
 cd ..
 
 
@@ -38,7 +38,7 @@ echo -n "Build c-ares... "
 make -j"$(nproc)" 
 
 echo -n "Install c-ares... "
-make install 
+sudo make install 
 cd ..
 
 
@@ -55,7 +55,7 @@ echo -n "Build wolfSSL... "
 make
 
 echo -n "Install wolfSSL... "
-make install 
+sudo make install 
 cd ..
 
 
@@ -71,7 +71,7 @@ echo -n "Build nghttp2... "
 make -j"$(nproc)" 
 
 echo -n "Install nghttp2... "
-make install
+sudo make install
 cd ..
 
 
@@ -87,7 +87,7 @@ echo -n "Build cURL... "
 make -j"$(nproc)" 
 
 echo -n "Install cURL... "
-make install 
+sudo make install 
 
 echo -e "\e[32mAll done\e[0m"
 
