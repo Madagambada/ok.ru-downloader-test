@@ -15,13 +15,13 @@ mkdir dependencies
 cd dependencies
 git clone git://git.musl-libc.org/musl
 cd musl
-./configure --prefix=$(pwd)/../musl-toolchain
+./configure --prefix=$(pwd)/musl-toolchain
 make
 make install
 
 
 echo -n "Set toolchain vars... "
-export TOOLCHAIN=$(pwd)/../musl-toolchain
+export TOOLCHAIN=$(pwd)/musl-toolchain
 export CC=$TOOLCHAIN/bin/musl-gcc
 
 #zlib
