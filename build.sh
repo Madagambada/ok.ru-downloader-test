@@ -6,6 +6,8 @@ export CC=$TOOLCHAIN/bin/musl-gcc
 
 ls $TOOLCHAIN/bin/musl-gcc
 ls $TOOLCHAIN/bin
+ls dependencies
+ls dependencies/musl
 
 echo -n "Create build directory... "
 mkdir build
