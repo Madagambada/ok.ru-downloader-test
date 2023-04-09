@@ -10,6 +10,9 @@ curlArchive='https://github.com/curl/curl/releases/download/curl-8_0_1/curl-8.0.
 echo -n "Install tools... "
 sudo apt update && sudo apt install tar xz-utils curl cmake make autoconf libtool -y
 
+echo -n "Set toolchain vars... "
+export TOOLCHAIN=/usr/local
+
 #zlib
 echo -n "Download and Extract zlib... "
 curl -s -L $zlibArchive | tar --xz -x
@@ -22,7 +25,7 @@ echo -n "Build zlib... "
 make -j$(nproc)
 
 echo -n "Install zlib... "
-sudo make install 
+make install 
 cd ..
 
 
@@ -38,7 +41,7 @@ echo -n "Build c-ares... "
 make -j"$(nproc)" 
 
 echo -n "Install c-ares... "
-sudo make install 
+make install 
 cd ..
 
 
@@ -49,13 +52,13 @@ curl -s -L $wolfSSLArchive | tar xz
 echo -n "Configure wolfSSL... "
 cd wolfssl*
 ./autogen.sh 
-./configure --enable-curl --enable-static --disable-shared --enable-all-crypto --with-libz=/usr/local
+./configure --enable-curl --enable-static --disable-shared --enable-all-crypto --with-libz=$TOOLCHAIN 
 
 echo -n "Build wolfSSL... "
 make
 
 echo -n "Install wolfSSL... "
-sudo make install 
+make install 
 cd ..
 
 
@@ -71,7 +74,7 @@ echo -n "Build nghttp2... "
 make -j"$(nproc)" 
 
 echo -n "Install nghttp2... "
-sudo make install
+make install
 cd ..
 
 
@@ -81,13 +84,13 @@ curl -s -L $curlArchive | tar --xz -x
 
 echo -n "Configure curl... "
 cd curl*
-./configure --disable-shared --with-wolfssl=/usr/local --enable-ares=/usr/local --with-nghttp2=/usr/local
+./configure --disable-shared --with-wolfssl=$TOOLCHAIN --enable-ares=$TOOLCHAIN --with-nghttp2=$TOOLCHAIN 
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
 
 echo -n "Install cURL... "
-sudo make install 
+make install 
 
 echo -e "\e[32mAll done\e[0m"
 
