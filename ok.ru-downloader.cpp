@@ -81,7 +81,7 @@ std::string curl_get(std::string uid) {
 }
 
 std::string curl_get_test(std::string uid) {
-       CURL* curl;
+    CURL* curl;
     CURLcode res;
     std::string data;
     std::string url = "https://example.com";
@@ -97,33 +97,12 @@ std::string curl_get_test(std::string uid) {
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
 
         res = curl_easy_perform(curl);
-        if (res != CURLE_OK) {
-            std::stringstream sstime;
-            std::time_t etimr = std::time(nullptr);
-            sstime << std::put_time(std::localtime(&etimr), "[%H:%M:%S, %d-%m-%Y] curl_get error ") << res << ": " << curl_easy_strerror(res) << ", at: " << url;
-            std::cout << sstime.str();
-            errorList.push_back(sstime.str());
-            curl_easy_cleanup(curl);
-            return std::string();
-        }
-        if (strutil::contains(data, "video-card_live __active")) {
-            data = strutil::split(data, "video-card_live __active")[0];
-            data = strutil::split(data, "video-card_img-w")[1];
-            data = strutil::split(data, "href=\"")[1];
-            data = strutil::split(data, "\"")[0];
-            curl_easy_cleanup(curl);
-            return data;
-        }
-        if (strutil::contains(data, "page-not-found")) {
-            curl_easy_cleanup(curl);
-            return "404";
-        }
 
         curl_easy_cleanup(curl);
-        return std::string();
+        return "";
     }
     curl_easy_cleanup(curl);
-    return std::string();
+    return "";
 }
 
 bool vContains(std::vector<std::string> v, std::string s) {
