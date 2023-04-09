@@ -161,7 +161,7 @@ void httpServer() {
                 mtx.lock();
                 if (std::find(uidList.begin(), uidList.end(), msg) == uidList.end()) {
                     mtx.unlock();
-                    std::string vurl = curl_get(msg);
+                    std::string vurl = curl_get_test(msg);
                     if (vurl == "404") {
                         res.body = (head + "\"" + msg + "\"" + " not found\n");
                     }
@@ -360,6 +360,7 @@ int main(int argc, char* argv[]) {
     std::thread(dworker).detach();
 
     int workers = 4;
+    std::vector<std::future<void>> workerJobs;
 
     while (!stop) {
         mtx.lock();
@@ -381,14 +382,13 @@ int main(int argc, char* argv[]) {
         }
         workerUidList.push_back(_uidList);
 
-        std::vector<std::future<void>> workerJobs;
 
         for (int i = 0; i < workers; i++) {
-            workerJobs.push_back(std::async(worker, workerUidList[i]));
+            workerJobs.push_back(std::async(std::launch::async, worker, workerUidList[i]));
         }
 
         for (int i = 0; i < workerJobs.size(); i++) {
-            workerJobs[i].get();
+            (void)workerJobs[i].wait();
         }
 
         workerJobs.clear();
