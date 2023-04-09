@@ -314,7 +314,7 @@ void dworker() {
 
         if (!_toDownload.empty()) {
             for (int i = 0; i < _toDownload.size(); i++) {
-                //std::thread(downloader, _toDownload[i].first, _toDownload[i].second).detach();
+                std::thread(downloader, _toDownload[i].first, _toDownload[i].second).detach();
             }
             _toDownload.clear();
         }
@@ -359,6 +359,7 @@ void worker(std::vector<std::string> tuidList) {
 
 int main(int argc, char* argv[]) {
     std::cout << head << std::endl;
+    curl_global_init(CURL_GLOBAL_ALL);
     cxxopts::Options options(head);
 
     options.add_options()
@@ -380,10 +381,9 @@ int main(int argc, char* argv[]) {
 
     folder = result["d"].as<std::string>();
 
-    curl_global_init(CURL_GLOBAL_DEFAULT);
     readFile();
     std::thread(httpServer).detach();
-    std::thread(dworker).detach();
+    //std::thread(dworker).detach();
 
     int workers = 4;
 
