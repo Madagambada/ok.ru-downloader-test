@@ -34,29 +34,50 @@ static size_t curl_write_func(void* buffer, size_t size, size_t nmemb, void* par
     return totalsize;
 }
 
-void curl_get(std::string uid) {
+std::string curl_get(std::string uid) {
+    CURL* curl;
+    CURLcode res;
+    std::string data;
+    std::string url = "https://ok.ru/profile/" + uid + "/video";
+    curl = curl_easy_init();
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 20L);
+        curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
+        curl_easy_setopt(curl, CURLOPT_DNS_SERVERS, "1.1.1.1,1.0.0.1");
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36");
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_func);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
 
-  CURL *curl;
-  CURLcode res;
- 
-  curl = curl_easy_init();
-  if(curl) {
-    curl_easy_setopt(curl, CURLOPT_URL, "https://example.com");
-    /* example.com is redirected, so we tell libcurl to follow redirection */
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
- 
-    /* Perform the request, res will get the return code */
-    res = curl_easy_perform(curl);
-    /* Check for errors */
-    if(res != CURLE_OK)
-      fprintf(stderr, "curl_easy_perform() failed: %s\n",
-              curl_easy_strerror(res));
- 
-    /* always cleanup */
+        res = curl_easy_perform(curl);
+        if (res != CURLE_OK) {
+            std::stringstream sstime;
+            std::time_t etimr = std::time(nullptr);
+            sstime << std::put_time(std::localtime(&etimr), "[%H:%M:%S, %d-%m-%Y] curl_get error ") << res << ": " << curl_easy_strerror(res) << ", at: " << url;
+            std::cout << sstime.str();
+            errorList.push_back(sstime.str());
+            curl_easy_cleanup(curl);
+            return std::string();
+        }
+        if (strutil::contains(data, "video-card_live __active")) {
+            data = strutil::split(data, "video-card_live __active")[0];
+            data = strutil::split(data, "video-card_img-w")[1];
+            data = strutil::split(data, "href=\"")[1];
+            data = strutil::split(data, "\"")[0];
+            curl_easy_cleanup(curl);
+            return data;
+        }
+        if (strutil::contains(data, "page-not-found")) {
+            curl_easy_cleanup(curl);
+            return "404";
+        }
+
+        curl_easy_cleanup(curl);
+        return std::string();
+    }
     curl_easy_cleanup(curl);
-  }
-  return;
+    return std::string();
 }
 
 bool vContains(std::vector<std::string> v, std::string s) {
@@ -132,153 +153,151 @@ void readFile() {
 void httpServer() {
     svr.Post("/", [](const httplib::Request& req, httplib::Response& res) {
         std::string msg = req.body;
-        if (msg == "h") {
-            res.body = (head +
-                "Commands:\n" +
-                "h - Help \n" +
-                "d - List active downloads \n" +
-                "a + User-ID - Add User-ID to database e.g. \"a 123456789\" \n" +
-                "l - List database \n" + "r + User-ID - remove User-ID from database e.g. \"r 123456789\" \n" +
-                "xa - Exit \n" + "e - list last 10 errors \n" +
-                "ea - list all errors\n" + "v - list version\n" +
-                "c + User-ID - check if User-ID is in database\n"
-                );
-        }
-        else if (msg == "v") {
-            res.body = (head + "Build with: \n\n" + std::string(curl_version()) + "\nhttplib/" + CPPHTTPLIB_VERSION + "\n");
-        }
-        else if (msg == "d") {
-            mtx.lock();
-            if (downloadListuid.size() > 0) {
-                std::string tmp;
-                for (unsigned int i = 0; i < downloadListuid.size(); i++) {
-                    tmp.append(downloadListuid[i] + "\n");
-                }
-                mtx.unlock();
-                res.body = (head + "Currently live:\n" + tmp);
-            }
-            else {
-                mtx.unlock();
-                res.body = (head + "Currently live:\n" + "None\n");
-            }
-        }
-        else if (msg.find("a ") != std::string::npos) {
-            if (msg.size() > 2) {
-                msg.erase(0, 2);
-                mtx.lock();
-                if (std::find(uidList.begin(), uidList.end(), msg) == uidList.end()) {
-                    mtx.unlock();
-                    //std::string vurl = curl_get(msg);
-                    curl_get(msg);
-                    std::string vurl = "";
-                    if (vurl == "404") {
-                        res.body = (head + "\"" + msg + "\"" + " not found\n");
-                    }
-                    else if (!vurl.empty()) {
-                        mtx.lock();
-                        uidList.push_back(msg);
-                        downloadListvid.push_back(vurl);
-                        downloadListuid.push_back(msg);
-                        mtx.unlock();
-                        std::thread(downloader, vurl, msg).detach();
-                        writeToFile();
-                        res.body = (head + "\"" + msg + "\"" + " added + downloading\n");
-                    }
-                    else {
-                        mtx.lock();
-                        uidList.push_back(msg);
-                        mtx.unlock();
-                        writeToFile();
-                        res.body = (head + "\"" + msg + "\"" + " added\n");
-                    }
-                }
-                else {
-                    mtx.unlock();
-                    res.body = (head + "\"" + msg + "\"" + " already in the database\n");
-                }
-            }
-        }
-        else if (msg == "l") {
-            std::string tmp = head + "In database (" + folder + "/ok-user.list" + "):\n";
-            mtx.lock();
-            for (unsigned int i = 0; i < uidList.size(); i++) {
-                tmp.append(uidList[i] + "\n");
+    if (msg == "h") {
+        res.body = (head +
+            "Commands:\n" +
+            "h - Help \n" +
+            "d - List active downloads \n" +
+            "a + User-ID - Add User-ID to database e.g. \"a 123456789\" \n" +
+            "l - List database \n" + "r + User-ID - remove User-ID from database e.g. \"r 123456789\" \n" +
+            "xa - Exit \n" + "e - list last 10 errors \n" +
+            "ea - list all errors\n" + "v - list version\n" +
+            "c + User-ID - check if User-ID is in database\n"
+            );
+    }
+    else if (msg == "v") {
+        res.body = (head + "Build with: \n\n" + std::string(curl_version()) + "\nhttplib/" + CPPHTTPLIB_VERSION + "\n");
+    }
+    else if (msg == "d") {
+        mtx.lock();
+        if (downloadListuid.size() > 0) {
+            std::string tmp;
+            for (unsigned int i = 0; i < downloadListuid.size(); i++) {
+                tmp.append(downloadListuid[i] + "\n");
             }
             mtx.unlock();
-            res.body = (tmp);
-        }
-        else if (msg.find("r ") != std::string::npos) {
-            if (msg.size() > 2) {
-                msg.erase(0, 2);
-                mtx.lock();
-                if (std::find(uidList.begin(), uidList.end(), msg) != uidList.end()) {
-                    for (int i = 0; i < uidList.size(); i++) {
-                        if (uidList[i] == msg) {
-                            uidList.erase(uidList.begin() + i);
-                            break;
-                        }
-                    }
-                    mtx.unlock();
-                    res.body = (head + "\"" + msg + "\"" + " deleted\n");
-                }
-                else {
-                    mtx.unlock();
-                    res.body = (head + "\"" + msg + "\"" + " not in database\n");
-                }
-            }
-        }
-        else if (msg == "xa") {
-            stop = true;
-            res.body = (head + "exit programm\n");
-            svr.stop();
-        }
-        else if (msg == "ea") {
-            std::stringstream tmpss;
-            if (errorList.empty()) {
-                tmpss << "No errors\n";
-            }
-            else {
-                for (unsigned int i = 0; i < errorList.size(); i++) {
-                    tmpss << errorList[i] + "\n";
-                }
-            }
-            res.body = (head + tmpss.str());
-        }
-        else if (msg == "e") {
-            std::stringstream tmpss;
-            if (errorList.size() > 10) {
-                for (unsigned int i = errorList.size() - 10; i < errorList.size(); i++) {
-                    tmpss << errorList[i] + "\n";
-                }
-            }
-            else if (errorList.empty()) {
-                tmpss << "No errors\n";
-            }
-            else {
-                for (unsigned int i = 0; i < errorList.size(); i++) {
-                    tmpss << errorList[i] + "\n";
-                }
-            }
-            res.body = (head + tmpss.str());
-        }
-        else if (msg.find("c ") != std::string::npos) {
-            if (msg.size() > 2) {
-                msg.erase(0, 2);
-                mtx.lock();
-                if (std::find(uidList.begin(), uidList.end(), msg) == uidList.end()) {
-                    mtx.unlock();
-                    res.body = (head + "\"" + msg + "\"" + " not in the database\n");
-                }
-                else {
-                    mtx.unlock();
-                    res.body = (head + "\"" + msg + "\"" + " in the database\n");
-                }
-            }
+            res.body = (head + "Currently live:\n" + tmp);
         }
         else {
-            res.body = (head + "\"" + msg + "\" is not a valid command\n" );
+            mtx.unlock();
+            res.body = (head + "Currently live:\n" + "None\n");
         }
-    });
+    }
+    else if (msg.find("a ") != std::string::npos) {
+        if (msg.size() > 2) {
+            msg.erase(0, 2);
+            mtx.lock();
+            if (std::find(uidList.begin(), uidList.end(), msg) == uidList.end()) {
+                mtx.unlock();
+                std::string vurl = curl_get(msg);
+                if (vurl == "404") {
+                    res.body = (head + "\"" + msg + "\"" + " not found\n");
+                }
+                else if (!vurl.empty()) {
+                    mtx.lock();
+                    uidList.push_back(msg);
+                    downloadListvid.push_back(vurl);
+                    downloadListuid.push_back(msg);
+                    mtx.unlock();
+                    std::thread(downloader, vurl, msg).detach();
+                    writeToFile();
+                    res.body = (head + "\"" + msg + "\"" + " added + downloading\n");
+                }
+                else {
+                    mtx.lock();
+                    uidList.push_back(msg);
+                    mtx.unlock();
+                    writeToFile();
+                    res.body = (head + "\"" + msg + "\"" + " added\n");
+                }
+            }
+            else {
+                mtx.unlock();
+                res.body = (head + "\"" + msg + "\"" + " already in the database\n");
+            }
+        }
+    }
+    else if (msg == "l") {
+        std::string tmp = head + "In database (" + folder + "/ok-user.list" + "):\n";
+        mtx.lock();
+        for (unsigned int i = 0; i < uidList.size(); i++) {
+            tmp.append(uidList[i] + "\n");
+        }
+        mtx.unlock();
+        res.body = (tmp);
+    }
+    else if (msg.find("r ") != std::string::npos) {
+        if (msg.size() > 2) {
+            msg.erase(0, 2);
+            mtx.lock();
+            if (std::find(uidList.begin(), uidList.end(), msg) != uidList.end()) {
+                for (int i = 0; i < uidList.size(); i++) {
+                    if (uidList[i] == msg) {
+                        uidList.erase(uidList.begin() + i);
+                        break;
+                    }
+                }
+                mtx.unlock();
+                res.body = (head + "\"" + msg + "\"" + " deleted\n");
+            }
+            else {
+                mtx.unlock();
+                res.body = (head + "\"" + msg + "\"" + " not in database\n");
+            }
+        }
+    }
+    else if (msg == "xa") {
+        stop = true;
+        res.body = (head + "exit programm\n");
+        svr.stop();
+    }
+    else if (msg == "ea") {
+        std::stringstream tmpss;
+        if (errorList.empty()) {
+            tmpss << "No errors\n";
+        }
+        else {
+            for (unsigned int i = 0; i < errorList.size(); i++) {
+                tmpss << errorList[i] + "\n";
+            }
+        }
+        res.body = (head + tmpss.str());
+    }
+    else if (msg == "e") {
+        std::stringstream tmpss;
+        if (errorList.size() > 10) {
+            for (unsigned int i = errorList.size() - 10; i < errorList.size(); i++) {
+                tmpss << errorList[i] + "\n";
+            }
+        }
+        else if (errorList.empty()) {
+            tmpss << "No errors\n";
+        }
+        else {
+            for (unsigned int i = 0; i < errorList.size(); i++) {
+                tmpss << errorList[i] + "\n";
+            }
+        }
+        res.body = (head + tmpss.str());
+    }
+    else if (msg.find("c ") != std::string::npos) {
+        if (msg.size() > 2) {
+            msg.erase(0, 2);
+            mtx.lock();
+            if (std::find(uidList.begin(), uidList.end(), msg) == uidList.end()) {
+                mtx.unlock();
+                res.body = (head + "\"" + msg + "\"" + " not in the database\n");
+            }
+            else {
+                mtx.unlock();
+                res.body = (head + "\"" + msg + "\"" + " in the database\n");
+            }
+        }
+    }
+    else {
+        res.body = (head + "\"" + msg + "\" is not a valid command\n");
+    }
+        });
     svr.listen("0.0.0.0", 34568);
 }
 
@@ -313,9 +332,7 @@ void dworker() {
 
 void worker(std::vector<std::string> tuidList) {
     for (int i = 0; i < tuidList.size(); i++) {
-        //std::string vurl = curl_get(tuidList[i]);
-        curl_get(tuidList[i]);
-        std::string vurl = "";
+        std::string vurl = curl_get(tuidList[i]);
         if (vurl.empty() || vurl == "404" || vContains(downloadListvid, vurl)) {
             if (vurl == "404") {
                 mtx.lock();
@@ -341,7 +358,6 @@ void worker(std::vector<std::string> tuidList) {
 }
 
 int main(int argc, char* argv[]) {
-    curl_global_init(CURL_GLOBAL_ALL);
     std::cout << head << std::endl;
     cxxopts::Options options(head);
 
@@ -364,6 +380,7 @@ int main(int argc, char* argv[]) {
 
     folder = result["d"].as<std::string>();
 
+    curl_global_init(CURL_GLOBAL_DEFAULT);
     readFile();
     std::thread(httpServer).detach();
     std::thread(dworker).detach();
@@ -398,6 +415,7 @@ int main(int argc, char* argv[]) {
 
         for (int i = 0; i < workerJobs.size(); i++) {
             workerJobs[i].wait();
+            workerJobs[i].get();
         }
 
         workerJobs.clear();
