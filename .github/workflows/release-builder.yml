@@ -1,0 +1,36 @@
+name: Release builder
+run-name: Build ${{ github.ref_name }}
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build dependencies
+      run: /bin/bash build-dependencies.sh
+
+    - name: Build ok.ru-downloader
+      run: /bin/bash build.sh
+      
+    - name: Test ok.ru-downloader
+      run: /bin/ldd build/ok.ru-downloader
+            
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: ${{ github.ref_name }}
+        generate_release_notes: true
+        tag_name: ${{ github.ref }}
+        files: build/ok.ru-downloader
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
