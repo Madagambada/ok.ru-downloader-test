@@ -11,19 +11,21 @@ echo -n "Install tools... "
 sudo apt update && sudo apt install lsb-release wget software-properties-common gnupg git tar xz-utils curl cmake make autoconf libtool -y
 
 echo -n "Install latest Clang... "
-sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+wget https://apt.llvm.org/llvm.sh
+chmod +x llvm.sh
+sudo ./llvm.sh 16
 sudo update-alternatives --remove-all clang
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-15 100
-sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 100 
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 100
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100 
 
 echo -n "Set vars... "
-export TOOLCHAIN=/usr/local
+export TOOLCHAIN=/usr
 export CC=/usr/bin/clang
 export CXX=/usr/bin/clang++ 
-export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib
-export LD_RUN_PATH=$LD_RUN_PATH:/usr/local/lib
-export C_INCLUDE_PATH=C_INCLUDE_PATH$:/usr/local/include
-export CPLUS_INCLUDE_PATH=CPLUS_INCLUDE_PATH$:/usr/local/include
+export LIBRARY_PATH=$LIBRARY_PATH:/usr/lib
+export LD_RUN_PATH=$LD_RUN_PATH:/usr/lib
+export C_INCLUDE_PATH=C_INCLUDE_PATH$:/usr/include
+export CPLUS_INCLUDE_PATH=CPLUS_INCLUDE_PATH$:/usr/include
 
 #zlib
 echo -n "Download and Extract zlib... "
