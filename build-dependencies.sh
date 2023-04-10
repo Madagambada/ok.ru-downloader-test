@@ -96,7 +96,7 @@ curl -s -L $curlArchive | tar --xz -x
 echo -n "Configure curl... "
 cd curl*
 export LDFLAGS='-lm'
-./configure --disable-shared --with-wolfssl=/usr/local --enable-ares=/usr/local --with-nghttp2=/usr/local
+./configure --disable-shared --without-brotli --without-zstd --with-wolfssl=/usr/local --enable-ares=/usr/local --with-nghttp2=/usr/local
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
