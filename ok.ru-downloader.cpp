@@ -76,7 +76,7 @@ std::string curl_get_old(std::string uid) {
     return std::string();
 }
 
-static std::string curl_get(std::string uid) {
+static std::string curl_getasdasd(std::string uid) {
     CURL *curl;
  
     curl = curl_easy_init();
@@ -84,6 +84,11 @@ static std::string curl_get(std::string uid) {
     curl_easy_perform(curl); /* ignores error */
     curl_easy_cleanup(curl);
     std::string url = "https://ok.ru/profile/" + uid + "/video";
+    return "";
+}
+
+static std::string curl_get(std::string uid) {
+    curl_getasdasd(uid);
     return "";
 }
 
