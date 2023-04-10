@@ -8,23 +8,18 @@ nghttp2Archive='https://github.com/nghttp2/nghttp2/releases/download/v1.52.0/ngh
 curlArchive='https://github.com/curl/curl/releases/download/curl-8_0_1/curl-8.0.1.tar.xz'
 
 echo -n "Install tools... "
-sudo apt update && sudo apt install git tar xz-utils curl cmake make autoconf libtool -y
+sudo apt update && sudo apt install lsb-release wget software-properties-common gnupg git tar xz-utils curl cmake make autoconf libtool -y
 
-echo -n "Get latest musl toolchain... "
-mkdir dependencies
-cd dependencies
-git clone https://github.com/richfelker/musl-cross-make.git
-cd musl-cross-make
-cp ../../config.mak config.mak
-make -j$(nproc)
-make install
-
-cd ../..
-ls
+echo -n "Install latest Clang... "
+bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+sudo update-alternatives --remove-all clang
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-15 100
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 100 
 
 echo -n "Set toolchain vars... "
-export TOOLCHAIN=$(pwd)/musl-toolchain
-export CC=$TOOLCHAIN/bin/musl-gcc
+export TOOLCHAIN=/lib/x86_64-linux-gnu
+export CC=/usr/bin/clang
+export CXX=/usr/bin/clang++ clang++
 
 #zlib
 echo -n "Download and Extract zlib... "
@@ -48,7 +43,7 @@ curl -s -L $caresArchive | tar zx
 
 echo -n "Configure c-ares... "
 cd c-ares*
-./configure --prefix=$TOOLCHAIN --host=x86_64-linux-musl --disable-shared 
+./configure --prefix=$TOOLCHAIN --disable-shared 
 
 echo -n "Build c-ares... "
 make -j"$(nproc)" 
@@ -65,7 +60,7 @@ curl -s -L $wolfSSLArchive | tar xz
 echo -n "Configure wolfSSL... "
 cd wolfssl*
 ./autogen.sh 
-./configure --host=x86_64-linux-musl --enable-curl --prefix=$TOOLCHAIN --enable-static --disable-shared --enable-all-crypto --with-libz=$TOOLCHAIN 
+./configure --enable-curl --prefix=$TOOLCHAIN --enable-static --disable-shared --enable-all-crypto --with-libz=$TOOLCHAIN 
 
 echo -n "Build wolfSSL... "
 make
@@ -81,7 +76,7 @@ curl -s -L $nghttp2Archive | tar --xz -x
 
 echo -n "Configure nghttp2... "
 cd nghttp2*
-./configure --host=x86_64-linux-musl --enable-lib-only --disable-shared --prefix=$TOOLCHAIN
+./configure --enable-lib-only --disable-shared --prefix=$TOOLCHAIN
 
 echo -n "Build nghttp2... "
 make -j"$(nproc)" 
@@ -97,7 +92,7 @@ curl -s -L $curlArchive | tar --xz -x
 
 echo -n "Configure curl... "
 cd curl*
-./configure --host=x86_64-linux-musl --disable-shared --prefix=$TOOLCHAIN --with-wolfssl=$TOOLCHAIN --enable-ares=$TOOLCHAIN --with-nghttp2=$TOOLCHAIN 
+./configure --disable-shared --prefix=$TOOLCHAIN --with-wolfssl=$TOOLCHAIN --enable-ares=$TOOLCHAIN --with-nghttp2=$TOOLCHAIN 
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
