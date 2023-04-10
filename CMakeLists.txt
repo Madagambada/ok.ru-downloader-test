@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
 project (ok.ru-downloader-t)
 
+include_directories(/usr/local/include)
+link_directories(/usr/local/lib)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Wno-sign-compare")
 
