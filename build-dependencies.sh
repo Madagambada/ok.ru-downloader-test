@@ -11,7 +11,7 @@ echo -n "Install tools... "
 sudo apt update && sudo apt install lsb-release wget software-properties-common gnupg git tar xz-utils curl cmake make autoconf libtool -y
 
 echo -n "Install latest Clang... "
-bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 sudo update-alternatives --remove-all clang
 sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-15 100
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 100 
