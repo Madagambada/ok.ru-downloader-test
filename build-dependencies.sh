@@ -35,7 +35,7 @@ cd zlib*
 ./configure --static
 
 echo -n "Build zlib... "
-make CFLAGS='-fPIC' -j$(nproc)
+make -j$(nproc)
 
 echo -n "Install zlib... "
 sudo make install 
