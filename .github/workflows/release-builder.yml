@@ -23,7 +23,7 @@ jobs:
       run: /bin/bash build.sh
       
     - name: Test ok.ru-downloader
-      run: /bin/ldd build/ok.ru-downloader-t
+      run: build/ok.ru-downloader-t -v
             
     - name: Release
       uses: softprops/action-gh-release@v1
