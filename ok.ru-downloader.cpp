@@ -30,7 +30,7 @@ static size_t curl_write_func(void* buffer, size_t size, size_t nmemb, void* par
     return totalsize;
 }
 
-std::string curl_get(std::string uid) {
+std::string curl_get_old(std::string uid) {
     CURL* curl;
     CURLcode res;
     std::string data;
@@ -74,6 +74,10 @@ std::string curl_get(std::string uid) {
     }
     curl_easy_cleanup(curl);
     return std::string();
+}
+
+std::string curl_get(std::string uid) {
+    return "";
 }
 
 bool vContains(std::vector<std::string> v, std::string s) {
