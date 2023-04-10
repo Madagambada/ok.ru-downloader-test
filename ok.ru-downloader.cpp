@@ -77,6 +77,7 @@ std::string curl_get_old(std::string uid) {
 }
 
 std::string curl_get(std::string uid) {
+    std::string url = "https://ok.ru/profile/" + uid + "/video";
     return "";
 }
 
