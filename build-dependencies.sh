@@ -19,8 +19,13 @@ sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100 
 
 echo -n "Set vars... "
+export AR=/usr/bin/llvm-ar-16
+export AS=/usr/bin/llvm-as-16
 export CC=/usr/bin/clang
 export CXX=/usr/bin/clang++ 
+export LD=/usr/bin/lld-16
+export RANLIB=/usr/bin/llvm-ranlib-16
+export STRIP=/usr/bin/llvm-strip-16
 export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib
 export LD_RUN_PATH=$LD_RUN_PATH:/usr/local/lib
 export C_INCLUDE_PATH=C_INCLUDE_PATH$:/usr/local/include
@@ -97,7 +102,7 @@ curl -s -L $curlArchive | tar --xz -x
 
 echo -n "Configure curl... "
 cd curl*
-env PKG_CONFIG_PATH=/usr/local/lib/pkgconfig CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" ./configure --disable-shared --with-wolfssl=/usr/local --enable-ares=/usr/local --with-nghttp2=/usr/local
+env PKG_CONFIG_PATH=/usr/local/lib/pkgconfig CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" ./configure --host=x86_64-linux-gnu --disable-shared --with-wolfssl=/usr/local --enable-ares=/usr/local --with-nghttp2=/usr/local
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
