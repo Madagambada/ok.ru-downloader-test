@@ -19,7 +19,7 @@ sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 100
 echo -n "Set vars... "
 #export TOOLCHAIN=/lib/x86_64-linux-gnu
 export CC=/usr/bin/clang
-export CXX=/usr/bin/clang++ clang++
+export CXX=/usr/bin/clang++ 
 export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib
 export LD_RUN_PATH=$LD_RUN_PATH:/usr/local/lib
 export C_INCLUDE_PATH=C_INCLUDE_PATH$:/usr/local/include
