@@ -88,7 +88,7 @@ static std::string curl_getasdasd(std::string uid) {
 }
 
 static std::string curl_get(std::string uid) {
-    curl_getasdasd(uid);
+    std::string asd = curl_getasdasd(uid);
     return "";
 }
 
