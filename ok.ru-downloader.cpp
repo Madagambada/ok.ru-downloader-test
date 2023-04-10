@@ -16,16 +16,12 @@
 #include "httplib.h"
 #include "cxxopts.hpp"
 
-std::string head = "ok downloader 1.0.2 -final-\n";
+std::string head = "ok downloader 1.0.3 -final-\n";
 bool stop = false;
 std::vector<std::string> uidList, downloadListvid, downloadListuid, errorList, notfoundList;
-std::vector <std::pair <std::string, std::string>> toDownload;
-std::mutex mtx;
 std::string folder;
-std::string userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36";
-
+std::mutex mtx;
 httplib::Server svr;
-
 
 static size_t curl_write_func(void* buffer, size_t size, size_t nmemb, void* param) {
     std::string& text = *static_cast<std::string*>(param);
@@ -110,7 +106,6 @@ void downloader(std::string vurl, std::string uid) {
     sstime << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S_live_");
     std::string saveLocation = folder + "/vid-ok/" + uid + "/" + sstime.str() + uid + ".mkv";
     std::string command = "yt-dlp --downloader ffmpeg -o \"" + saveLocation + "\" -q https://ok.ru" + vurl;
-    std::cout << "command:\n" + command << std::endl;
     system(command.c_str());
 
     mtx.lock();
@@ -301,63 +296,8 @@ void httpServer() {
     svr.listen("0.0.0.0", 34568);
 }
 
-void dworker() {
-    std::vector <std::pair <std::string, std::string>> _toDownload;
-    std::vector <std::string> _notfoundList;
-    while (!stop) {
-        mtx.lock();
-        _toDownload = toDownload;
-        _notfoundList = notfoundList;
-        toDownload.clear();
-        notfoundList.clear();
-        mtx.unlock();
-
-        if (!_toDownload.empty()) {
-            for (int i = 0; i < _toDownload.size(); i++) {
-                std::thread(downloader, _toDownload[i].first, _toDownload[i].second).detach();
-            }
-            _toDownload.clear();
-        }
-
-        if (!_notfoundList.empty()) {
-            for (int i = 0; i < _notfoundList.size(); i++) {
-                std::thread(renamefolder, _notfoundList[i]).detach();
-            }
-            _notfoundList.clear();
-        }
-
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-}
-
-void worker(std::vector<std::string> tuidList) {
-    for (int i = 0; i < tuidList.size(); i++) {
-        std::string vurl = curl_get(tuidList[i]);
-        if (vurl.empty() || vurl == "404" || vContains(downloadListvid, vurl)) {
-            if (vurl == "404") {
-                mtx.lock();
-                notfoundList.push_back(tuidList[i]);
-                for (int o = 0; o < uidList.size(); o++) {
-                    if (uidList[o] == tuidList[i]) {
-                        uidList.erase(uidList.begin() + o);
-                        break;
-                    }
-                }
-                writeToFile();
-                mtx.unlock();
-            }
-            continue;
-        }
-        mtx.lock();
-        downloadListvid.push_back(vurl);
-        downloadListuid.push_back(tuidList[i]);
-        toDownload.push_back(std::make_pair(vurl, tuidList[i]));
-        mtx.unlock();
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-}
-
 int main(int argc, char* argv[]) {
+    curl_global_init(CURL_GLOBAL_DEFAULT);
     std::cout << head << std::endl;
     cxxopts::Options options(head);
 
@@ -380,25 +320,23 @@ int main(int argc, char* argv[]) {
 
     folder = result["d"].as<std::string>();
 
-    curl_global_init(CURL_GLOBAL_DEFAULT);
     readFile();
     std::thread(httpServer).detach();
-    std::thread(dworker).detach();
+    std::vector<std::future<std::string>> workerJobs;
 
-    int workers = 4;
+    int workersNr = 4;
 
     while (!stop) {
-        curl_global_init(CURL_GLOBAL_DEFAULT);
         mtx.lock();
         std::vector<std::string> _uidList = uidList;
         mtx.unlock();
 
-        int size = (_uidList.size() - 1) / workers + 1;
+        int size = (_uidList.size() - 1) / workersNr + 1;
 
         std::vector< std::vector<std::string>> workerUidList;
         std::vector<std::string> _t;
 
-        for (int i = 0; i < workers - 1; i++) {
+        for (int i = 0; i < workersNr - 1; i++) {
             for (int k = 0; k < size; k++) {
                 _t.push_back(_uidList[_uidList.size() - 1]);
                 _uidList.pop_back();
@@ -408,19 +346,46 @@ int main(int argc, char* argv[]) {
         }
         workerUidList.push_back(_uidList);
 
-        std::thread one(worker, workerUidList[0]);
-        std::thread two(worker, workerUidList[1]);
-        std::thread three(worker, workerUidList[2]);
-        std::thread four(worker, workerUidList[3]);
+        std::vector<std::future<std::string>> workerJobs;
 
-        one.join();
-        two.join();
-        three.join();
-        four.join();
+        std::vector<std::string> workerResult;
 
-        workerUidList.clear();
-        curl_global_cleanup();
+        for (int i = 0; i < workersNr; i++) {
+            for (int k = 0; k < workerUidList[i].size(); k++) {
+                workerJobs.push_back(std::async(curl_get, workerUidList[i][k]));
+            }
+            for (int k = 0; k < workerJobs.size(); k++) {
+                workerJobs[k].wait();
+                workerResult.push_back(workerJobs[k].get());
+            }
+            for (int k = 0; k < workerResult.size(); k++) {
+                if (workerResult[k].empty() || workerResult[k] == "404" || vContains(downloadListvid, workerResult[k])) {
+                    if (workerResult[k] == "404") {
+                        mtx.lock();
+                        for (int o = 0; o < uidList.size(); o++) {
+                            if (uidList[o] == workerUidList[i][k]) {
+                                uidList.erase(uidList.begin() + o);
+                                break;
+                            }
+                        }
+                        writeToFile();
+                        mtx.unlock();
+                    }
+                    continue;
+                }
+                mtx.lock();
+                downloadListvid.push_back(workerResult[k]);
+                downloadListuid.push_back(workerUidList[i][k]);
+                std::thread(downloader, workerResult[k], workerUidList[i][k]).detach();
+                mtx.unlock();
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+        workerJobs.clear();
+        workerResult.clear();
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
+    curl_global_cleanup();
     return 0;
 }
