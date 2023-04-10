@@ -4,7 +4,7 @@ project (ok.ru-downloader-t)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra -Wno-sign-compare")
 
-set(LINKING_LIBRARIES "-lcurl -lwolfssl -lz -lcares -lnghttp2")
+set(LINKING_LIBRARIES "-lcurl -lwolfssl -lz -lm -lcares -lnghttp2")
 
 add_executable (ok.ru-downloader-t ok.ru-downloader.cpp)
 target_link_libraries (ok.ru-downloader-t ${LINKING_LIBRARIES} -static)
