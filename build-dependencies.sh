@@ -8,7 +8,7 @@ nghttp2Archive='https://github.com/nghttp2/nghttp2/releases/download/v1.52.0/ngh
 curlArchive='https://github.com/curl/curl/releases/download/curl-8_0_1/curl-8.0.1.tar.xz'
 
 echo -n "Install tools... "
-sudo apt update && sudo apt install lsb-release wget software-properties-common gnupg git tar xz-utils curl cmake make autoconf libtool -y
+sudo apt update && sudo apt install lsb-release pkg-config wget software-properties-common gnupg git tar xz-utils curl cmake make autoconf libtool -y
 
 echo -n "Install latest Clang... "
 wget https://apt.llvm.org/llvm.sh
@@ -35,7 +35,7 @@ cd zlib*
 ./configure --static
 
 echo -n "Build zlib... "
-make -j$(nproc)
+make CFLAGS='-fPIC' -j$(nproc)
 
 echo -n "Install zlib... "
 sudo make install 
@@ -65,7 +65,7 @@ curl -s -L $wolfSSLArchive | tar xz
 echo -n "Configure wolfSSL... "
 cd wolfssl*
 ./autogen.sh 
-./configure --enable-curl --enable-distro --enable-static --disable-shared --enable-all-crypto --with-libz
+./configure --enable-curl --enable-distro --enable-static --disable-shared --enable-all-crypto --with-libz=/usr/local
 
 echo -n "Build wolfSSL... "
 make
@@ -97,7 +97,7 @@ curl -s -L $curlArchive | tar --xz -x
 
 echo -n "Configure curl... "
 cd curl*
-./configure --disable-shared --with-wolfssl --enable-ares --with-nghttp2
+env PKG_CONFIG_PATH=/usr/local/lib/pkgconfig CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" ./configure --disable-shared --with-wolfssl=/usr/local --enable-ares=/usr/local --with-nghttp2=/usr/local
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
