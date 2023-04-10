@@ -17,7 +17,7 @@ sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-15 
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 100 
 
 echo -n "Set toolchain vars... "
-export TOOLCHAIN=/lib/x86_64-linux-gnu
+#export TOOLCHAIN=/lib/x86_64-linux-gnu
 export CC=/usr/bin/clang
 export CXX=/usr/bin/clang++ clang++
 
@@ -27,13 +27,13 @@ curl -s -L $zlibArchive | tar --xz -x
 
 echo -n "Configure zlib... "
 cd zlib*
-./configure --prefix=$TOOLCHAIN --static
+./configure --static
 
 echo -n "Build zlib... "
 make -j$(nproc)
 
 echo -n "Install zlib... "
-make install 
+sudo make install 
 cd ..
 
 
@@ -43,13 +43,13 @@ curl -s -L $caresArchive | tar zx
 
 echo -n "Configure c-ares... "
 cd c-ares*
-./configure --prefix=$TOOLCHAIN --disable-shared 
+./configure --disable-shared 
 
 echo -n "Build c-ares... "
 make -j"$(nproc)" 
 
 echo -n "Install c-ares... "
-make install 
+sudo make install 
 cd ..
 
 
@@ -60,13 +60,13 @@ curl -s -L $wolfSSLArchive | tar xz
 echo -n "Configure wolfSSL... "
 cd wolfssl*
 ./autogen.sh 
-./configure --enable-curl --prefix=$TOOLCHAIN --enable-static --disable-shared --enable-all-crypto --with-libz=$TOOLCHAIN 
+./configure --enable-curl --enable-static --disable-shared --enable-all-crypto --with-libz 
 
 echo -n "Build wolfSSL... "
 make
 
 echo -n "Install wolfSSL... "
-make install 
+sudo make install 
 cd ..
 
 
@@ -76,13 +76,13 @@ curl -s -L $nghttp2Archive | tar --xz -x
 
 echo -n "Configure nghttp2... "
 cd nghttp2*
-./configure --enable-lib-only --disable-shared --prefix=$TOOLCHAIN
+./configure --enable-lib-only --disable-shared
 
 echo -n "Build nghttp2... "
 make -j"$(nproc)" 
 
 echo -n "Install nghttp2... "
-make install
+sudo make install
 cd ..
 
 
@@ -92,13 +92,13 @@ curl -s -L $curlArchive | tar --xz -x
 
 echo -n "Configure curl... "
 cd curl*
-./configure --disable-shared --prefix=$TOOLCHAIN --with-wolfssl=$TOOLCHAIN --enable-ares=$TOOLCHAIN --with-nghttp2=$TOOLCHAIN 
+./configure --disable-shared --with-wolfssl --enable-ares --with-nghttp2
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
 
 echo -n "Install cURL... "
-make install 
+sudo make install 
 
 echo -e "\e[32mAll done\e[0m"
 
