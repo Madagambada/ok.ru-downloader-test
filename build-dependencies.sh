@@ -65,7 +65,7 @@ curl -s -L $wolfSSLArchive | tar xz
 echo -n "Configure wolfSSL... "
 cd wolfssl*
 ./autogen.sh 
-./configure --enable-curl --enable-distro --enable-static --disable-shared --enable-all-crypto --with-libz=/usr/local
+./configure --host=x86_64-pc-linux-gnu --enable-curl --enable-distro --enable-static --disable-shared --enable-all-crypto
 
 echo -n "Build wolfSSL... "
 make
