@@ -28,7 +28,7 @@ curl -s -L $zlibArchive | tar --xz -x
 
 echo -n "Configure zlib... "
 cd zlib*
-./configure --prefix=$TOOLCHAIN --static
+./configure --static
 
 echo -n "Build zlib... "
 make -j$(nproc)
@@ -44,7 +44,7 @@ curl -s -L $caresArchive | tar zx
 
 echo -n "Configure c-ares... "
 cd c-ares*
-./configure --prefix=$TOOLCHAIN --disable-shared --host=x86_64-pc-linux-gnu
+./configure --disable-shared
 
 echo -n "Build c-ares... "
 make -j"$(nproc)" 
@@ -61,7 +61,7 @@ curl -s -L $wolfSSLArchive | tar xz
 echo -n "Configure wolfSSL... "
 cd wolfssl*
 ./autogen.sh 
-./configure --enable-curl --prefix=$TOOLCHAIN --enable-static --disable-shared --enable-all-crypto --with-libz=$TOOLCHAIN --host=x86_64-pc-linux-gnu
+./configure --enable-curl --enable-distro --enable-static --disable-shared --enable-all-crypto --with-libz
 
 echo -n "Build wolfSSL... "
 make
@@ -77,7 +77,7 @@ curl -s -L $nghttp2Archive | tar --xz -x
 
 echo -n "Configure nghttp2... "
 cd nghttp2*
-./configure --enable-lib-only --disable-shared --prefix=$TOOLCHAIN --host=x86_64-pc-linux-gnu
+./configure --enable-lib-only --disable-shared
 
 echo -n "Build nghttp2... "
 make -j"$(nproc)" 
@@ -93,7 +93,7 @@ curl -s -L $curlArchive | tar --xz -x
 
 echo -n "Configure curl... "
 cd curl*
-./configure --disable-shared --prefix=$TOOLCHAIN --with-wolfssl=$TOOLCHAIN --enable-ares=$TOOLCHAIN --with-nghttp2=$TOOLCHAIN --host=x86_64-pc-linux-gnu
+./configure --disable-shared --with-wolfssl --enable-ares --with-nghttp2
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
