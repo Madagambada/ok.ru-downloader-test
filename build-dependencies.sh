@@ -14,22 +14,19 @@ echo -n "Install latest Clang... "
 wget https://apt.llvm.org/llvm.sh
 chmod +x llvm.sh
 sudo ./llvm.sh 16
-sudo update-alternatives --remove-all clang
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 100
-sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100 
 
 echo -n "Set vars... "
 export AR=/usr/bin/llvm-ar-16
 export AS=/usr/bin/llvm-as-16
-export CC=/usr/bin/clang
-export CXX=/usr/bin/clang++ 
-export LD=/usr/bin/lld-16
+export CC=/usr/bin/clang-16
+export CXX=/usr/bin/clang++-16
+export LD=/usr/bin/llvm-ld-16
 export RANLIB=/usr/bin/llvm-ranlib-16
 export STRIP=/usr/bin/llvm-strip-16
 export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib
 export LD_RUN_PATH=$LD_RUN_PATH:/usr/local/lib
-export C_INCLUDE_PATH=C_INCLUDE_PATH$:/usr/local/include
-export CPLUS_INCLUDE_PATH=CPLUS_INCLUDE_PATH$:/usr/local/include
+export C_INCLUDE_PATH=$C_INCLUDE_PATH:/usr/local/include
+export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/usr/local/include
 
 #zlib
 echo -n "Download and Extract zlib... "
@@ -70,7 +67,7 @@ curl -s -L $wolfSSLArchive | tar xz
 echo -n "Configure wolfSSL... "
 cd wolfssl*
 ./autogen.sh 
-./configure --host=x86_64-pc-linux-gnu --enable-curl --enable-distro --enable-static --disable-shared --enable-all-crypto
+./configure --enable-curl --enable-static --disable-shared --enable-all-crypto
 
 echo -n "Build wolfSSL... "
 make
@@ -102,7 +99,8 @@ curl -s -L $curlArchive | tar --xz -x
 
 echo -n "Configure curl... "
 cd curl*
-env PKG_CONFIG_PATH=/usr/local/lib/pkgconfig CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" ./configure --host=x86_64-linux-gnu --disable-shared --with-wolfssl=/usr/local --enable-ares=/usr/local --with-nghttp2=/usr/local
+export LDFLAGS='-lm'
+./configure --disable-shared --with-wolfssl=/usr/local --enable-ares=/usr/local --with-nghttp2=/usr/local
 
 echo -n "Build cURL... "
 make -j"$(nproc)" 
